@@ -1,0 +1,39 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Meeting to Scope of Work</title>
+<style>
+body{font:16px system-ui;max-width:900px;margin:2rem auto;padding:0 1rem;color:#1a1a1a}h1{font-size:1.3rem}h2{font-size:1.05rem;margin-top:1.4rem}
+textarea,input,select{width:100%;box-sizing:border-box;font:inherit;padding:.5rem;margin:.3rem 0}button{padding:.55rem 1.1rem;cursor:pointer;margin:.3rem .3rem 0 0}
+button.main{background:#1a1a1a;color:#fff;border:0;border-radius:6px}table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #ddd;padding:.35rem;text-align:left;font-size:.92rem}
+.warn{background:#fff6e0;border:1px solid #e8c26a;border-radius:8px;padding:.7rem;margin:.6rem 0}.extra{background:#fde8e8}.ok{background:#e4f6e6}
+.pill{padding:.1rem .5rem;border-radius:99px;background:#eee;font-size:.8rem}
+</style>
+<h1>Meeting to Scope of Work</h1>
+<div id="s1"><h2>1. Project and transcripts</h2>
+<input id="pname" placeholder="Client / project name"><button onclick="mk()">Create project</button> <span id="pid" class="pill"></span>
+<input id="tname" placeholder="Transcript name, e.g. meeting-1"><textarea id="ttext" rows="6" placeholder="Paste the transcript (Speaker: text per line)"></textarea>
+<button onclick="addT()">Add transcript</button> <span id="tl"></span></div>
+<div id="s2"><h2>2. Generate</h2><button class="main" onclick="gen()">Generate scope (or update, if a scope is already approved)</button> <span id="busy"></span></div>
+<div id="out"></div>
+<script>
+const J=(u,b)=>fetch(u,b?{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)}:{}).then(async r=>{const t=await r.text();try{return {ok:r.ok,j:JSON.parse(t)}}catch{return {ok:r.ok,j:t}}});
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let P=null,names=[];
+async function mk(){const r=await J('/projects',{name:pname.value||'Untitled'});P=r.j.id;pid.textContent=P}
+async function addT(){if(!P)return alert('Create the project first');await J(`/projects/${P}/transcripts`,{name:tname.value,text:ttext.value});names.push(tname.value);tl.textContent='Added: '+names.join(', ');tname.value='';ttext.value=''}
+async function gen(){if(!P||!names.length)return alert('Add a transcript first');busy.textContent='Working...';
+ const pick=prompt('Which transcripts for this run? (comma separated)',names[names.length-1]);const r=await J(`/projects/${P}/generate`,{transcripts:pick.split(',').map(x=>x.trim())});busy.textContent='';
+ if(!r.ok)return out.innerHTML=`<div class="warn">${esc(r.j.detail||r.j)}</div>`;show(r.j)}
+function show(v){const d=v.diff;const lo=v.tasks.reduce((a,t)=>a+t.hours_low,0).toFixed(1),hi=v.tasks.reduce((a,t)=>a+t.hours_high,0).toFixed(1);
+ out.innerHTML=`<h2>Version ${v.version} <span class="pill">${v.status}</span></h2>
+ ${v.review_issues.length?`<div class="warn"><b>Check before approving</b><ul>${v.review_issues.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`:''}
+ ${d?`<h2>What changed</h2><table><tr><th>Item</th><th>Change</th></tr>
+ ${d.modified.map(m=>`<tr><td>${m.id}</td><td>Changed: ${esc(m.before)} -> ${esc(m.after)} (${m.delta_hours>=0?'+':''}${m.delta_hours}h)</td></tr>`).join('')}
+ ${d.removed.map(m=>`<tr class="ok"><td>${m.id}</td><td>Removed: ${esc(m.text)} (credit ${m.hours_credit}h)</td></tr>`).join('')}
+ ${d.new_out_of_scope.map(m=>`<tr class="extra"><td>${m.id}</td><td><b>Outside agreed scope - quote extra:</b> ${esc(m.text)} - ${m.hours_with_overhead}h, ${esc(m.price)}</td></tr>`).join('')}</table>`:''}
+ <h2>Scope and estimate (${lo}-${hi} hours)</h2><table><tr><th>Req</th><th>Task</th><th>Hours</th></tr>${v.tasks.map(t=>`<tr><td>${esc(t.requirement_id)}</td><td>${esc(t.title)}</td><td>${t.hours_low}-${t.hours_high}</td></tr>`).join('')}</table>
+ ${v.questions.length?`<h2>Questions to ask the client</h2><ul>${v.questions.map(q=>`<li>${esc(q)}</li>`).join('')}</ul>`:''}
+ <h2>Proposal draft</h2><pre style="white-space:pre-wrap;background:#f6f6f6;padding:1rem;border-radius:8px">${esc(v.proposal_md)}</pre>
+ ${v.status==='draft'?`<input id="who" placeholder="Your name (approver)"><button class="main" onclick="ap(${v.version})">Approve - allows sending to the client</button><button onclick="rj(${v.version})">Reject</button>`:''}`}
+async function ap(n){const r=await J(`/projects/${P}/versions/${n}/approve`,{approver:who.value||'reviewer'});if(r.ok){const v=await J(`/projects/${P}/versions/${n}`);show(v.j)}else alert(r.j.detail)}
+async function rj(n){await J(`/projects/${P}/versions/${n}/reject`,{});const v=await J(`/projects/${P}/versions/${n}`);show(v.j)}
+</script>

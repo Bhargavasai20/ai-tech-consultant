@@ -1,0 +1,27 @@
+{
+ "extraction": [
+  {"text": "Maria: We need online ordering for our cakes.", "keywords": ["online ordering"], "existing_setting": false},
+  {"text": "Maria: We want a newsletter signup form on the homepage.", "keywords": ["newsletter"], "existing_setting": true},
+  {"text": "Maria: We must accept card payments at checkout.", "keywords": ["card payments"], "existing_setting": false},
+  {"text": "Maria: We need the site in Spanish too.", "keywords": ["spanish"], "existing_setting": true},
+  {"text": "Maria: Please add a coupon code field at checkout.", "keywords": ["coupon"], "existing_setting": false},
+  {"text": "Maria: Customers should upload a reference photo with the order.", "keywords": ["upload"], "existing_setting": false},
+  {"text": "Maria: We want the owner to get an email when an order arrives.", "keywords": ["email"], "existing_setting": false},
+  {"text": "Maria: I want to connect my own domain name.", "keywords": ["domain"], "existing_setting": true},
+  {"text": "Maria: We need to export the member list every month.", "keywords": ["export"], "existing_setting": true},
+  {"text": "Maria: Please make the search better.", "keywords": ["search"], "existing_setting": false, "needs_question": true},
+  {"text": "Maria: We want a more modern homepage.", "keywords": ["homepage"], "existing_setting": false, "needs_question": true},
+  {"text": "Maria: We need a loyalty points program.", "keywords": ["loyalty"], "existing_setting": false},
+  {"text": "Maria: Customers must be able to track their delivery on a map.", "keywords": ["track"], "existing_setting": false},
+  {"text": "Maria: We need an admin dashboard with weekly sales.", "keywords": ["dashboard"], "existing_setting": false},
+  {"text": "Dev: How is the weather? Maria: Lovely, thanks. Dev: Great, lunch later?", "keywords": [], "existing_setting": false, "expect_none": true}
+ ],
+ "baseline": ["We must accept card payments at checkout", "We want a newsletter signup form on the homepage", "Customers should pick a pickup date and a time slot", "We need the site in Spanish too"],
+ "reconcile": [
+  {"text": "Maria: Instead of card only, we must accept card payments and cash at checkout.", "expect": "modified"},
+  {"text": "Maria: Drop the newsletter signup form, we don't need it anymore.", "expect": "remove"},
+  {"text": "Maria: We also want a loyalty points program for returning customers.", "expect": "new"},
+  {"text": "Maria: Customers should pick a pickup date and a time slot, that stays.", "expect": "same"},
+  {"text": "Maria: We also need gift cards that customers can buy online.", "expect": "new"}
+ ]
+}

@@ -1,0 +1,5 @@
+Maria: For the cake orders, customers need to upload a reference photo.
+Dev: Understood. Who gets notified?
+Maria: We want the shop owner to receive an email whenever a new order arrives.
+Maria: Please add a coupon code field at checkout for the holiday season.
+Maria: Customers should pick a pickup date and a time slot.

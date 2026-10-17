@@ -1,0 +1,30 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Knowledge Brain</title>
+<style>
+body{font:16px system-ui;max-width:760px;margin:2rem auto;padding:0 1rem;color:#1a1a1a}
+h1{font-size:1.3rem}nav button{padding:.5rem 1rem;border:1px solid #bbb;background:#fff;cursor:pointer}
+nav button.on{background:#1a1a1a;color:#fff}input,textarea{width:100%;padding:.6rem;font:inherit;box-sizing:border-box}
+.card{border:1px solid #ddd;border-radius:8px;padding:1rem;margin:.8rem 0}.src{font-size:.85rem;color:#555}
+.warn{background:#fff6e0;border-color:#e8c26a}button.go{padding:.6rem 1.2rem;margin-top:.5rem}img{max-width:100%;border:1px solid #ddd}
+</style>
+<h1>Knowledge Brain</h1>
+<nav><button id="t1" class="on" onclick="tab(1)">Ask</button><button id="t2" onclick="tab(2)">Expert queue</button></nav>
+<div id="p1"><input id="q" placeholder="Ask anything about the product..." onkeydown="if(event.key==='Enter')ask()">
+<button class="go" onclick="ask()">Ask</button><div id="out"></div></div>
+<div id="p2" hidden><div id="tasks"></div></div>
+<script>
+const H={'Content-Type':'application/json'};let K=localStorage.getItem('key');if(K)H['X-API-Key']=K;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function tab(n){p1.hidden=n!=1;p2.hidden=n!=2;t1.className=n==1?'on':'';t2.className=n==2?'on':'';if(n==2)load()}
+async function ask(){out.innerHTML='Thinking...';const r=await fetch('/v1/ask',{method:'POST',headers:H,body:JSON.stringify({question:q.value})});
+ if(!r.ok){out.textContent='Error '+r.status;return}const d=await r.json();
+ out.innerHTML=`<div class="card ${d.answered?'':'warn'}"><p>${esc(d.answer)}</p>`+
+ d.sources.map(s=>`<div class="src">Source ${s.n}: <a href="${esc(s.url)}" target="_blank">${esc(s.title)}</a>${s.kind=='expert'?' (expert answer)':''}${s.image_url?`<br><img src="${esc(s.image_url)}" alt="screenshot">`:''}</div>`).join('')+
+ (d.answered?`<p><button onclick="fb(true)">Helpful</button> <button onclick="fb(false)">Not helpful</button></p>`:'')+`</div>`;window._last=d}
+async function fb(h){await fetch('/v1/feedback',{method:'POST',headers:H,body:JSON.stringify({question:_last.question,answer:_last.answer,helpful:h})});out.insertAdjacentHTML('beforeend','<p>Thanks.</p>')}
+async function load(){const r=await fetch('/v1/tasks',{headers:H});const t=await r.json();
+ tasks.innerHTML=t.length?t.map(x=>`<div class="card"><b>${esc(x.question)}</b><div class="src">${esc(x.reason||'')}</div>
+ <textarea id="a${x.id}" rows="3" placeholder="Your answer"></textarea><input id="e${x.id}" placeholder="Your name">
+ <button class="go" onclick="res(${x.id})">Save answer to memory</button></div>`).join(''):'<p>No open questions.</p>'}
+async function res(id){await fetch(`/v1/tasks/${id}/resolve`,{method:'POST',headers:H,body:JSON.stringify({answer:document.getElementById('a'+id).value,expert:document.getElementById('e'+id).value||'expert'})});load()}
+</script>

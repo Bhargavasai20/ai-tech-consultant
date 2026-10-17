@@ -1,0 +1,34 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Inbox Agent</title>
+<style>
+body{font:16px system-ui;max-width:860px;margin:2rem auto;padding:0 1rem;color:#1a1a1a}h1{font-size:1.3rem}
+.card{border:1px solid #ddd;border-radius:8px;padding:1rem;margin:.8rem 0}.flag{background:#fff6e0;border-color:#e8c26a}
+.meta{font-size:.85rem;color:#555}textarea{width:100%;box-sizing:border-box;font:inherit;padding:.6rem}
+button{padding:.55rem 1.1rem;margin:.3rem .3rem 0 0;cursor:pointer}button.main{background:#1a1a1a;color:#fff;border:0;border-radius:6px}
+nav button.on{background:#1a1a1a;color:#fff}.pill{display:inline-block;padding:.1rem .5rem;border-radius:99px;background:#eee;font-size:.8rem}
+.auto{background:#dff5e1}details{margin:.5rem 0}pre{white-space:pre-wrap;background:#f6f6f6;padding:.6rem;border-radius:6px}
+</style>
+<h1>Inbox Agent</h1>
+<nav><button id="n1" class="on" onclick="tab(1)">Needs review</button><button id="n2" onclick="tab(2)">What it has learned</button><button id="n3" onclick="tab(3)">Try an email</button></nav>
+<div id="v1"></div><div id="v2" hidden></div>
+<div id="v3" hidden><input id="from" placeholder="customer@example.com" style="width:100%;padding:.5rem;margin:.5rem 0"><input id="subj" placeholder="Subject" style="width:100%;padding:.5rem">
+<textarea id="body" rows="6" placeholder="Paste a customer email"></textarea><button class="main" onclick="submitEmail()">Draft a reply</button></div>
+<script>
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const J=(u,b)=>fetch(u,b?{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)}:{}).then(r=>r.json());
+function tab(n){for(let i=1;i<4;i++){document.getElementById('v'+i).hidden=i!=n;document.getElementById('n'+i).className=i==n?'on':''}if(n==1)queue();if(n==2)learned()}
+async function queue(){const ds=await J('/api/drafts');v1.innerHTML=ds.length?ds.map(d=>`<div class="card ${d.reasons.length?'flag':''}">
+<div class="meta"><b>${esc(d.email.from)}</b> - ${esc(d.email.subject)} <span class="pill">${esc(d.kind)}</span></div><pre>${esc(d.email.body)}</pre>
+${d.reasons.length?`<div class="meta">Check before sending: ${d.reasons.map(esc).join('; ')}</div>`:''}
+<textarea id="t${d.id}" rows="7">${esc(d.body)}</textarea>
+<div class="meta">${d.sources.map(s=>`<a href="${esc(s.url)}" target="_blank">${esc(s.title)}</a>`).join(' | ')}</div>
+<button class="main" onclick="sendIt('${d.id}')">Send</button><span class="meta"> Edit the text first if needed - the agent learns from your changes.</span></div>`).join(''):'<p>Nothing waiting. Nice.</p>'}
+async function sendIt(id){const r=await J('/api/drafts/feedback',{draftId:id,finalBody:document.getElementById('t'+id).value});queue()}
+async function learned(){const ks=await J('/api/kinds');v2.innerHTML=ks.length?ks.map(k=>`<div class="card"><b>${esc(k.kind)}</b> <span class="pill ${k.autoSend?'auto':''}">${k.autoSend?'sends by itself':'human reviews'}</span>
+<div class="meta">${k.streak}/20 unchanged in a row - ${k.total} reviewed - ${k.autoSentCount} auto-sent - ${k.demotions} demotions<br>${esc(k.lastEvent)}${k.trend.early!==null?`<br>Sent unchanged: ${Math.round(k.trend.early*100)}% early, ${Math.round(k.trend.late*100)}% recently`:''}</div>
+${k.rules.map(r=>`<div class="meta">${r.active?'':'(off) '}Rule: ${esc(r.text)} ${r.active?`<button onclick="rev('${r.id}')">Undo</button>`:''}</div>`).join('')}
+${k.autoSend?`<button onclick="dem('${esc(k.kind)}')">Stop auto-send</button>`:''}</div>`).join(''):'<p>Nothing yet. Review some drafts first.</p>'}
+async function rev(id){await J('/api/rules/revert',{id});learned()}async function dem(k){await J('/api/kinds/demote',{kind:k});learned()}
+async function submitEmail(){await J('/api/emails',{from:from.value,subject:subj.value,body:body.value});body.value='';tab(1)}
+queue()
+</script>

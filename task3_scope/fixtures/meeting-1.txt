@@ -1,0 +1,7 @@
+Maria: Thanks for meeting. We run a family bakery and we need online ordering for our cakes.
+Dev: Sure. What does a typical order look like?
+Maria: Customers should pick a pickup date and a time slot. We must accept card payments at checkout.
+Maria: We also want a newsletter signup form on the homepage.
+Maria: Honestly the search is bad, please make the search better.
+Dev: Anything about the design?
+Maria: We want a more modern homepage. And we need the site in Spanish too.

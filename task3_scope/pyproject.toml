@@ -1,0 +1,9 @@
+[project]
+name = "scope"
+version = "0.1.0"
+description = "Task 3 - Meeting to Scope of Work: agent team, versioned scope, diff, human approval"
+requires-python = ">=3.11"
+dependencies = ["fastapi>=0.110", "uvicorn>=0.29", "anthropic>=0.40"]
+
+[tool.setuptools]
+packages = ["scope"]

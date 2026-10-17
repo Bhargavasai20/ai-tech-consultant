@@ -1,0 +1,5 @@
+Maria: Thanks for the proposal. Actually, drop the newsletter signup form on the homepage, we don't need it anymore.
+Maria: Instead of card only, we must accept card payments and cash on pickup at checkout.
+Maria: We also want a loyalty points program for returning customers.
+Dev: Anything else?
+Maria: Customers should pick a pickup date and a time slot, that part stays the same.

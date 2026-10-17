@@ -1,0 +1,12 @@
+[project]
+name = "brain"
+version = "0.1.0"
+description = "Task 1 - Knowledge Brain: polite crawler, multimodal memory, daily sync, cited Q&A, expert loop"
+requires-python = ">=3.11"
+dependencies = ["fastapi>=0.110", "uvicorn>=0.29", "httpx>=0.27", "anthropic>=0.40"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.setuptools]
+packages = ["brain"]
